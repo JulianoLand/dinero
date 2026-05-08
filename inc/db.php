@@ -246,14 +246,16 @@ function transaction_summary($houseId, $filters = [])
     $stmt->execute($params);
     $summary = $stmt->fetch(PDO::FETCH_ASSOC);
     $caixinha_total = ($summary['paid_caixinha'] ?: 0) - ($summary['paid_caixinha_retirada'] ?: 0);
+    $paid_expense_with_caixinha = ($summary['paid_expense'] ?: 0) + ($summary['paid_caixinha_retirada'] ?: 0);
     return [
         'income' => $summary['paid_income'] ?: 0,
         'expense' => $summary['paid_expense'] ?: 0,
+        'expense_display' => $paid_expense_with_caixinha,
         'caixinha' => $caixinha_total,
         'pending_income' => $summary['pending_income'] ?: 0,
         'pending_expense' => $summary['pending_expense'] ?: 0,
         'pending_caixinha' => $summary['pending_caixinha'] ?: 0,
-        'balance' => ($summary['paid_income'] ?: 0) - ($summary['paid_expense'] ?: 0) - $caixinha_total,
+        'balance' => ($summary['paid_income'] ?: 0) - ($summary['paid_expense'] ?: 0) - ($summary['paid_caixinha'] ?: 0),
     ];
 }
 
@@ -284,16 +286,18 @@ function user_aggregate_summary($userId)
     $summaries = [];
     foreach ($results as $row) {
         $caixinha_total = ($row['paid_caixinha'] ?: 0) - ($row['paid_caixinha_retirada'] ?: 0);
+        $paid_expense_with_caixinha = ($row['paid_expense'] ?: 0) + ($row['paid_caixinha_retirada'] ?: 0);
         $summaries[] = [
             'house_id' => $row['id'],
             'house_name' => $row['name'],
             'income' => $row['paid_income'] ?: 0,
             'expense' => $row['paid_expense'] ?: 0,
+            'expense_display' => $paid_expense_with_caixinha,
             'caixinha' => $caixinha_total,
             'pending_income' => $row['pending_income'] ?: 0,
             'pending_expense' => $row['pending_expense'] ?: 0,
             'pending_caixinha' => $row['pending_caixinha'] ?: 0,
-            'balance' => ($row['paid_income'] ?: 0) - ($row['paid_expense'] ?: 0) - $caixinha_total,
+            'balance' => ($row['paid_income'] ?: 0) - ($row['paid_expense'] ?: 0) - ($row['paid_caixinha'] ?: 0),
         ];
     }
     return $summaries;

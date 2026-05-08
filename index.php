@@ -474,10 +474,11 @@ function render_dashboard()
         echo '<div class="summary-grid" style="margin-top:12px;">';
         echo '<div class="summary-card"><small>Saldo</small><strong>R$ ' . number_format($summary['balance'], 2, ',', '.') . '</strong></div>';
         echo '<div class="summary-card"><small>Receita</small><strong>R$ ' . number_format($summary['income'], 2, ',', '.') . '</strong></div>';
-        echo '<div class="summary-card"><small>Despesa</small><strong>R$ ' . number_format($summary['expense'], 2, ',', '.') . '</strong></div>';
+        echo '<div class="summary-card"><small>Despesa</small><strong>R$ ' . number_format($summary['expense_display'] ?? $summary['expense'], 2, ',', '.') . '</strong></div>';
         echo '<div class="summary-card"><small>Caixinha</small><strong>R$ ' . number_format($summary['caixinha'], 2, ',', '.') . '</strong></div>';
         echo '<div class="summary-card"><small>A receber</small><strong>R$ ' . number_format($summary['pending_income'], 2, ',', '.') . '</strong></div>';
         echo '<div class="summary-card"><small>A pagar</small><strong>R$ ' . number_format($summary['pending_expense'], 2, ',', '.') . '</strong></div>';
+        echo '</div>';
     }
     echo '</div></div>';
     echo '<div class="card"><h2>Criar nova casa</h2><form method="post">';
@@ -605,7 +606,7 @@ function render_house()
     echo '<p>' . h($house['description']) . '</p>';
     echo '<div class="summary-grid">';
     echo '<div class="summary-card"><small>Receitas</small><strong>R$ ' . number_format($summary['income'], 2, ',', '.') . '</strong></div>';
-    echo '<div class="summary-card"><small>Despesas</small><strong>R$ ' . number_format($summary['expense'], 2, ',', '.') . '</strong></div>';
+    echo '<div class="summary-card"><small>Despesas</small><strong>R$ ' . number_format($summary['expense_display'] ?? $summary['expense'], 2, ',', '.') . '</strong></div>';
     echo '<div class="summary-card"><small>Caixinha</small><strong>R$ ' . number_format($summary['caixinha'], 2, ',', '.') . '</strong></div>';
     echo '<div class="summary-card"><small>Saldo</small><strong>R$ ' . number_format($summary['balance'], 2, ',', '.') . '</strong></div>';
     echo '<div class="summary-card"><small>Receitas pendentes</small><strong>R$ ' . number_format($summary['pending_income'], 2, ',', '.') . '</strong></div>';

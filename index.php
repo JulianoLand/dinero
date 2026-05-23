@@ -375,7 +375,7 @@ function render_header()
 {
     $user = current_user();
     echo '<div class="header">';
-    echo '<div><h1>Dinero</h1><p>Gerencie casas, transações e permissões em um só lugar.</p></div>';
+    echo '<div><h1>Dinero</h1></div>';
     echo '<div class="nav-links">';
     if ($user) {
         echo '<a href="?page=dashboard">Dashboard</a>';
@@ -455,7 +455,7 @@ function render_dashboard()
     $houses = user_houses($user['id']);
     $house_summaries = user_aggregate_summary($user['id']);
     echo '<div class="container"><div class="card"><h2>Bem-vindo, ' . h($user['name']) . '</h2>';
-    echo '<p>Veja suas casas e controle financeiro em um só painel.</p>';
+    echo '<p>Casas</p>';
     echo '<div class="grid-2"><div class="card">';
     echo '<div class="card-list">';
     if (!$houses) {
@@ -472,9 +472,9 @@ function render_dashboard()
         echo '<a class="action-link" href="?page=house&house_id=' . $house['id'] . '">Abrir</a></div>';
         echo '</div>';
         echo '<div class="summary-grid" style="margin-top:12px;">';
-        echo '<div class="summary-card"><small>Saldo</small><strong>R$ ' . number_format($summary['balance'], 2, ',', '.') . '</strong></div>';
-        echo '<div class="summary-card"><small>Receita</small><strong>R$ ' . number_format($summary['income'], 2, ',', '.') . '</strong></div>';
-        echo '<div class="summary-card"><small>Despesa</small><strong>R$ ' . number_format($summary['expense_display'] ?? $summary['expense'], 2, ',', '.') . '</strong></div>';
+        echo '<div class="summary-card summary-card-balance"><small>Saldo:</small> <strong>R$ ' . number_format($summary['balance'], 2, ',', '.') . '</strong></div>';
+        echo '<div class="summary-card"><small>Receita:</small> <strong>R$ ' . number_format($summary['income'], 2, ',', '.') . '</strong></div>';
+        echo '<div class="summary-card summary-card-expense"><small>Despesa:</small> <strong>R$ ' . number_format($summary['expense_display'] ?? $summary['expense'], 2, ',', '.') . '</strong></div>';
         echo '<div class="summary-card"><small>Caixinha</small><strong>R$ ' . number_format($summary['caixinha'], 2, ',', '.') . '</strong></div>';
         echo '<div class="summary-card"><small>A receber</small><strong>R$ ' . number_format($summary['pending_income'], 2, ',', '.') . '</strong></div>';
         echo '<div class="summary-card"><small>A pagar</small><strong>R$ ' . number_format($summary['pending_expense'], 2, ',', '.') . '</strong></div>';
@@ -605,10 +605,10 @@ function render_house()
     echo '<a class="action-link" href="?page=house_details&house_id=' . $houseId . '" style="font-size:0.95rem;">Detalhes</a></div>';
     echo '<p>' . h($house['description']) . '</p>';
     echo '<div class="summary-grid">';
-    echo '<div class="summary-card"><small>Receitas</small><strong>R$ ' . number_format($summary['income'], 2, ',', '.') . '</strong></div>';
-    echo '<div class="summary-card"><small>Despesas</small><strong>R$ ' . number_format($summary['expense_display'] ?? $summary['expense'], 2, ',', '.') . '</strong></div>';
-    echo '<div class="summary-card"><small>Caixinha</small><strong>R$ ' . number_format($summary['caixinha'], 2, ',', '.') . '</strong></div>';
-    echo '<div class="summary-card"><small>Saldo</small><strong>R$ ' . number_format($summary['balance'], 2, ',', '.') . '</strong></div>';
+    echo '<div class="summary-card"><small>Receitas:</small> <strong>R$ ' . number_format($summary['income'], 2, ',', '.') . '</strong></div>';
+    echo '<div class="summary-card summary-card-expense"><small>Despesas:</small> <strong>R$ ' . number_format($summary['expense_display'] ?? $summary['expense'], 2, ',', '.') . '</strong></div>';
+    echo '<div class="summary-card"><small>Caixinha:</small> <strong>R$ ' . number_format($summary['caixinha'], 2, ',', '.') . '</strong></div>';
+    echo '<div class="summary-card summary-card-balance"><small>Saldo:</small> <strong>R$ ' . number_format($summary['balance'], 2, ',', '.') . '</strong></div>';
     echo '<div class="summary-card"><small>Receitas pendentes</small><strong>R$ ' . number_format($summary['pending_income'], 2, ',', '.') . '</strong></div>';
     echo '<div class="summary-card"><small>Despesas pendentes</small><strong>R$ ' . number_format($summary['pending_expense'], 2, ',', '.') . '</strong></div>';
     echo '</div>';
@@ -642,7 +642,8 @@ function render_house()
             <button type="submit" class="btn-secondary" title="' . ($transaction['status'] === 'paid' ? 'Marcar como pendente' : 'Marcar como pago') . '">' . ($transaction['status'] === 'paid' ? '⏳' : '✔️') . '</button>
             </form>';
             if (in_array($role, ['admin', 'editor'])) {
-                echo '<a class="action-link" href="?page=house&house_id=' . $houseId . '&edit_transaction=' . $transaction['id'] . '" title="Editar">✏️</a>';
+                $transactionJson = json_encode($transaction);
+                echo '<button class="action-link" style="background: transparent; border: none; cursor: pointer; padding: 8px 12px; border-radius: 10px; font-size: 1rem;" onclick="editTransaction(' . htmlspecialchars($transactionJson, ENT_QUOTES, 'UTF-8') . ')" title="Editar">✏️</button>';
                 echo '<form method="post" style="display:inline; margin-left:6px;">
                 <input type="hidden" name="action" value="delete_transaction">
                 <input type="hidden" name="house_id" value="' . $houseId . '">
@@ -671,7 +672,7 @@ function render_house()
         }
     }
 
-    echo '<div class="panel"><h2>' . ($editTransaction ? 'Editar transação' : 'Nova transação') . '</h2><form method="post">';
+    echo '<div class="panel transaction-form-desktop"><h2>' . ($editTransaction ? 'Editar transação' : 'Nova transação') . '</h2><form method="post">';
     if (in_array($role, ['admin', 'editor'])) {
         if ($editTransaction) {
             echo '<input type="hidden" name="action" value="update_transaction">';
@@ -716,6 +717,7 @@ function render_house()
 </head>
 <body>
 <?php render_page(); ?>
+<!-- Confirm Modal -->
 <div class="modal-backdrop confirm-modal" role="dialog" aria-modal="true">
     <div class="modal">
         <p class="confirm-modal-message">Tem certeza?</p>
@@ -725,6 +727,52 @@ function render_house()
         </div>
     </div>
 </div>
+
+<!-- Transaction Modal (Mobile) -->
+<div class="transaction-modal" id="transactionModal">
+    <div class="transaction-modal-content">
+        <div class="transaction-modal-header">
+            <h2 id="transactionModalTitle">Nova transação</h2>
+            <button type="button" class="close-modal-btn" onclick="closeTransactionModal()">✕</button>
+        </div>
+        <form method="post" id="transactionForm">
+            <input type="hidden" name="action" id="formAction" value="create_transaction">
+            <input type="hidden" name="transaction_id" id="formTransactionId" value="">
+            <input type="hidden" name="house_id" id="formHouseId" value="">
+            
+            <label>Tipo<select name="type" id="formType"><option value="income">Receita</option><option value="expense" selected>Despesa</option><option value="caixinha">Caixinha - Entrada</option><option value="caixinha_retirada">Caixinha - Retirada</option></select></label>
+            <label>Categoria<input type="text" name="category" id="formCategory" required></label>
+            <label>Descrição<textarea name="description" id="formDescription" rows="3"></textarea></label>
+            <label>Valor<input type="number" step="0.01" name="amount" id="formAmount" required></label>
+            <label>Data<input type="date" name="date" id="formDate" value="<?php echo date('Y-m-d'); ?>" required></label>
+            <label>Vencimento<input type="date" name="due_date" id="formDueDate"></label>
+            <label>Intervalo de recorrência<select name="recurrence_interval" id="formRecurrenceInterval"><option value="none" selected>Sem recorrência</option><option value="daily">Diário</option><option value="weekly">Semanal</option><option value="monthly">Mensal</option><option value="yearly">Anual</option></select></label>
+            <label>Quantidade de repetições<input type="number" name="recurrence_count" id="formRecurrenceCount" min="1" value="1"></label>
+            <label>Status<select name="status" id="formStatus"><option value="pending" selected>Pendente</option><option value="paid">Pago</option></select></label>
+            
+            <div class="actions" style="gap: 10px;">
+                <button type="submit" id="submitBtn">Salvar transação</button>
+                <button type="button" class="action-link" style="background: transparent; color: #3b82f6; border: 1px solid transparent; padding: 8px 12px; width: auto;" onclick="closeTransactionModal()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Mobile Navigation -->
+<nav class="mobile-nav">
+    <a href="?page=dashboard" class="mobile-nav-item" id="navDashboard">
+        <span class="mobile-nav-icon">📊</span>
+        <span>Dashboard</span>
+    </a>
+    <button type="button" class="mobile-nav-add" onclick="openTransactionModal()" id="navAdd" style="display: none;">
+        <span>+</span>
+    </button>
+    <a href="?page=profile" class="mobile-nav-item" id="navProfile">
+        <span class="mobile-nav-icon">👤</span>
+        <span>Perfil</span>
+    </a>
+</nav>
+
 <script src="assets/script.js"></script>
 </body>
 </html>
